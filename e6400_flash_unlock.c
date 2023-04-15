@@ -48,6 +48,15 @@ enum EC_FDO_CMD {
 	UNSET_OVERRIDE = 3
 };
 
+void wait_ec(void);
+uint8_t read_ec_reg(uint8_t index);
+void write_ec_reg(uint8_t index, uint8_t data);
+void send_ec_cmd(uint8_t cmd);
+uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
+int get_fdo_status(void);
+int get_gbl_smi_en(void);
+int set_gbl_smi_en(int enable);
+
 void wait_ec(void) {
 	uint8_t busy;
 	do {
@@ -84,11 +93,11 @@ uint8_t ec_fdo_command(enum EC_FDO_CMD arg) {
 	return 1;
 }
 
-int get_fdo_status() {
+int get_fdo_status(void) {
 	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
 }
 
-int get_gbl_smi_en() {
+int get_gbl_smi_en(void) {
 	return inl(SMI_EN_REG) & 1;
 }
 
