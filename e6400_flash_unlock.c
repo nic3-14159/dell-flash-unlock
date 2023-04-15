@@ -78,17 +78,17 @@ main(int argc, char *argv[])
 	if (rcba_mmio == MAP_FAILED)
 		err(errno, "Could not map RCBA");
 
-	if (get_fdo_status() == 1) { /* tell EC to set FDO straps upon boot */
+	if (get_fdo_status() == 1) {
 		ec_fdo_command(2);
 		printf("Flash Descriptor Override enabled. Shut down now. The "
 			"EC will auto-boot the system and set the override.\n"
 			"Upon boot, re-run this utility to unlock flash.\n");
-	} else if (get_gbl_smi_en()){ /* disable SMIs for internal flashing */
+	} else if (get_gbl_smi_en()){
 		set_gbl_smi_en(0);
 		printf("SMIs disabled. Internal flashing should work now.\n"
 			"After flashing, re-run this utility to enable SMIs.\n"
 			"(shutdown is buggy when SMIs are disabled)\n");
-	} else { /* enable SMIs so that the system can shut down properly */
+	} else {
 		set_gbl_smi_en(1);
 		printf("SMIs enabled, you can now shutdown the system.\n");
 	}
