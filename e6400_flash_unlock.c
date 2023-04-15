@@ -137,24 +137,35 @@ main(int argc, char *argv[]) {
 		err(errno, "/dev/mem");
 
 	// Flash Descriptor Override Pin-Strap Status bit is in RCBA mmio space
-	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd, RCBA);
+	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
+			RCBA);
 	if (rcba_mmio == MAP_FAILED)
 		err(errno, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) {
 		// FDO strap not set, so tell EC to set it on next boot
 		ec_fdo_command(2);
-		printf("Flash Descriptor override enabled. Please *shutdown* (don't reboot) the system.\n");
-		printf("The EC will automatically boot the system and set the descriptor override.\n");
-		printf("Then run this utility again to complete the unlock process.\n");
+		printf("Flash Descriptor override enabled. Please *shutdown* "
+			"(don't reboot) the system.\nThe EC will automatically"
+			"boot the system and set the descriptor override.\n"
+			"Then run this utility again to complete the unlock"
+			"process\n");
 	} else if (get_gbl_smi_en()){
-		// SMIs enabled, so disable them to bypass the BIOS Lock function
+		/*
+		 * SMIs enabled, so disable them to bypass
+		 * the BIOS Lock function
+		 */
 		set_gbl_smi_en(0);
-		printf("SMIs disabled, you should now be able to run flashrom -p internal on the entire flash!\n\n");
-		printf("After you are done flashing, run this utility again to re-enable SMIs,\n");
-		printf("as the system will not power off properly if SMIs are disabled\n");
+		printf("SMIs disabled, you should now be able to run flashrom "
+			"-p internal on the entire flash!\n\nAfter you are "
+			"done flashing, run this utility again to re-enable "
+			"SMIs,\n as the system will not power off properly if "
+			"SMIs are disabled.\n");
 	} else {
-		// SMIs disabled, so re-enable them so that shutdown works properly
+		/*
+		 * SMIs disabled, so re-enable them so that
+		 * shutdown works properly
+		 */
 		set_gbl_smi_en(1);
 		printf("SMIs enabled, you can now shutdown the system.\n");
 	}
