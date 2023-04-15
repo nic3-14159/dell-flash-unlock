@@ -118,11 +118,11 @@ int main(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
 
-	if (ioperm(EC_INDEX, 2, 1) < 0 || ioperm(SMI_EN_REG, 4, 1) < 0)
+	if ((ioperm(EC_INDEX, 2, 1) == -1) || (ioperm(SMI_EN_REG, 4, 1) == -1))
 		err(errno, "Could not access IO ports");
 
 	int devmemfd = open("/dev/mem", O_RDONLY); 
-	if (devmemfd < 0)
+	if (devmemfd == -1)
 		err(errno, "/dev/mem");
 
 	// Flash Descriptor Override Pin-Strap Status bit is in RCBA mmio space
