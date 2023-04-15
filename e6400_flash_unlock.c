@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <sys/io.h>
 #include <sys/mman.h>
+#include <errno.h>
+#include <err.h>
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
@@ -116,24 +118,17 @@ int main(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
 
-	if (ioperm(EC_INDEX, 2, 1) < 0 || ioperm(SMI_EN_REG, 4, 1) < 0) {
-		perror("Could not access IO ports");
-		printf("This program must be run with root/sudo privileges\n");
-		exit(1);
-	}
+	if (ioperm(EC_INDEX, 2, 1) < 0 || ioperm(SMI_EN_REG, 4, 1) < 0)
+		err(errno, "Could not access IO ports");
 
 	int devmemfd = open("/dev/mem", O_RDONLY); 
-	if (devmemfd < 0) {
-		perror("Could not open /dev/mem");
-		exit(1);
-	}
+	if (devmemfd < 0)
+		err(errno, "/dev/mem");
 
 	// Flash Descriptor Override Pin-Strap Status bit is in RCBA mmio space
 	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd, RCBA);
-	if (rcba_mmio == MAP_FAILED) {
-		perror("Could not map RCBA");
-		exit(1);
-	}
+	if (rcba_mmio == MAP_FAILED)
+		err(errno, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) {
 		// FDO strap not set, so tell EC to set it on next boot
@@ -152,5 +147,5 @@ int main(int argc, char *argv[]) {
 		set_gbl_smi_en(1);
 		printf("SMIs enabled, you can now shutdown the system.\n");
 	}
-	return 0;
+	return errno;
 }
