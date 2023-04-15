@@ -20,14 +20,15 @@
  * IN THE SOFTWARE.
  */
 
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/io.h>
 #include <sys/mman.h>
-#include <errno.h>
+
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 enum
 EC_FDO_CMD {
