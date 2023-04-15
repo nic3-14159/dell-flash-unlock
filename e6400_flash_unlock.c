@@ -29,6 +29,22 @@
 #include <errno.h>
 #include <err.h>
 
+enum
+EC_FDO_CMD {
+	QUERY = 0,
+	SET_OVERRIDE = 2,
+	UNSET_OVERRIDE = 3
+};
+
+int get_fdo_status(void);
+uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
+void write_ec_reg(uint8_t index, uint8_t data);
+void send_ec_cmd(uint8_t cmd);
+void wait_ec(void);
+int get_gbl_smi_en(void);
+int set_gbl_smi_en(int enable);
+uint8_t read_ec_reg(uint8_t index);
+
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
 #define PMBASE 0x1000
@@ -43,85 +59,6 @@
 #define HSFS_REG  0x04
 
 volatile uint8_t *rcba_mmio;
-
-enum
-EC_FDO_CMD {
-	QUERY = 0,
-	SET_OVERRIDE = 2,
-	UNSET_OVERRIDE = 3
-};
-
-void wait_ec(void);
-uint8_t read_ec_reg(uint8_t index);
-void write_ec_reg(uint8_t index, uint8_t data);
-void send_ec_cmd(uint8_t cmd);
-uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
-int get_fdo_status(void);
-int get_gbl_smi_en(void);
-int set_gbl_smi_en(int enable);
-
-void
-wait_ec(void) {
-	uint8_t busy;
-	do {
-		outb(0, EC_INDEX);
-		busy = inb(EC_DATA);
-	} while (busy); 
-}
-
-uint8_t
-read_ec_reg(uint8_t index) {
-	outb(index, EC_INDEX);
-	return inb(EC_DATA);
-}
-
-void
-write_ec_reg(uint8_t index, uint8_t data) {
-	outb(index, EC_INDEX);
-	outb(data, EC_DATA);
-}
-
-void
-send_ec_cmd(uint8_t cmd) {
-	outb(0, EC_INDEX);
-	outb(cmd, EC_DATA);
-	wait_ec();
-}
-
-/**
- * arg:
- * 0 = Query EC FDO status - TODO
- * 2 = Enable FDO for next boot
- * 3 = Disable FDO for next boot - TODO
- */
-uint8_t
-ec_fdo_command(enum EC_FDO_CMD arg) {
-	write_ec_reg(0x12, arg);
-	send_ec_cmd(0xb8);
-	return 1;
-}
-
-int
-get_fdo_status(void) {
-	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
-}
-
-int
-get_gbl_smi_en(void) {
-	return inl(SMI_EN_REG) & 1;
-}
-
-int
-set_gbl_smi_en(int enable) {
-	uint32_t smi_en = inl(SMI_EN_REG);	
-	if (enable) {
-		smi_en |= 1;
-	} else {
-		smi_en &= ~1;
-	}
-	outl(smi_en, SMI_EN_REG);
-	return (get_gbl_smi_en() == enable);
-}
 
 int
 main(int argc, char *argv[]) {
@@ -170,4 +107,67 @@ main(int argc, char *argv[]) {
 		printf("SMIs enabled, you can now shutdown the system.\n");
 	}
 	return errno;
+}
+
+int
+get_fdo_status(void) {
+	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
+}
+
+/**
+ * arg:
+ * 0 = Query EC FDO status - TODO
+ * 2 = Enable FDO for next boot
+ * 3 = Disable FDO for next boot - TODO
+ */
+uint8_t
+ec_fdo_command(enum EC_FDO_CMD arg) {
+	write_ec_reg(0x12, arg);
+	send_ec_cmd(0xb8);
+	return 1;
+}
+
+void
+write_ec_reg(uint8_t index, uint8_t data) {
+	outb(index, EC_INDEX);
+	outb(data, EC_DATA);
+}
+
+void
+send_ec_cmd(uint8_t cmd) {
+	outb(0, EC_INDEX);
+	outb(cmd, EC_DATA);
+	wait_ec();
+}
+
+void
+wait_ec(void) {
+	uint8_t busy;
+	do {
+		outb(0, EC_INDEX);
+		busy = inb(EC_DATA);
+	} while (busy); 
+}
+
+int
+get_gbl_smi_en(void) {
+	return inl(SMI_EN_REG) & 1;
+}
+
+int
+set_gbl_smi_en(int enable) {
+	uint32_t smi_en = inl(SMI_EN_REG);	
+	if (enable) {
+		smi_en |= 1;
+	} else {
+		smi_en &= ~1;
+	}
+	outl(smi_en, SMI_EN_REG);
+	return (get_gbl_smi_en() == enable);
+}
+
+uint8_t
+read_ec_reg(uint8_t index) {
+	outb(index, EC_INDEX);
+	return inb(EC_DATA);
 }
