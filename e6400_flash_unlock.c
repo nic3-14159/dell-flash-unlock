@@ -115,14 +115,15 @@ int set_gbl_smi_en(int enable) {
 }
 
 int main(int argc, char *argv[]) {
+	int devmemfd;
+
 	(void)argc;
 	(void)argv;
 
 	if ((ioperm(EC_INDEX, 2, 1) == -1) || (ioperm(SMI_EN_REG, 4, 1) == -1))
 		err(errno, "Could not access IO ports");
 
-	int devmemfd = open("/dev/mem", O_RDONLY); 
-	if (devmemfd == -1)
+	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
 		err(errno, "/dev/mem");
 
 	// Flash Descriptor Override Pin-Strap Status bit is in RCBA mmio space
