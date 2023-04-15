@@ -1,5 +1,9 @@
 # Dell Latitude E6400 Internal Flashing
 
+This utility allows you to use flashrom's internal programmer to program the
+entire BIOS flash chip from software while still running the original Dell
+BIOS, which normally restricts software writes to the flash chip.
+
 ## TL;DR
 Run `make` to compile the utility, and then run `sudo ./e6400_flash_unlock` and
 follow the directions it outputs.
