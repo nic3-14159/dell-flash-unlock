@@ -112,7 +112,10 @@ int set_gbl_smi_en(int enable) {
 	return (get_gbl_smi_en() == enable);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+	(void)argc;
+	(void)argv;
+
 	if (ioperm(EC_INDEX, 2, 1) < 0 || ioperm(SMI_EN_REG, 4, 1) < 0) {
 		perror("Could not access IO ports");
 		printf("This program must be run with root/sudo privileges\n");
