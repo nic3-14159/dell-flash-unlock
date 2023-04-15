@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 CC=cc
-CFLAGS=-Wall -Wextra -Werror -O2
+CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
 
 all: e6400_flash_unlock.c
 	$(CC) $(CFLAGS) e6400_flash_unlock.c -o e6400_flash_unlock
