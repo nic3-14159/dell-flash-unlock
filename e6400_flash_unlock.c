@@ -27,8 +27,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 enum
 EC_FDO_CMD {
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 		err(errno, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) {
-		ec_fdo_command(2);
+		ec_fdo_command(SET_OVERRIDE);
 		printf("Flash Descriptor Override enabled. Shut down now. The "
 			"EC will auto-boot the system and set the override.\n"
 			"Upon boot, re-run this utility to unlock flash.\n");
