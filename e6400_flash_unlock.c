@@ -48,11 +48,11 @@ int set_gbl_smi_en(int enable);
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
-#define PMBASE 0x1000
+#define PMBASE 0x400
 #define SMI_EN_REG (PMBASE + 0x30)
 
 /* Assume this is the same on all vendor BIOS versions */
-#define RCBA 0xfed18000
+#define RCBA 0xfed1c000
 
 #define RCBA_MMIO_LEN 0x4000
 #define SPIBAR 0x3800
