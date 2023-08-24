@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 enum
 EC_FDO_CMD {
@@ -41,7 +42,7 @@ int get_fdo_status(void);
 uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
-void wait_ec(void);
+int wait_ec(void);
 int get_gbl_smi_en(void);
 int set_gbl_smi_en(int enable);
 /* uint8_t read_ec_reg(uint8_t index); */
@@ -79,6 +80,7 @@ main(int argc, char *argv[])
 		err(errno, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) {
+		printf("Sending FDO override command to EC:\n");
 		ec_fdo_command(SET_OVERRIDE);
 		printf("Flash Descriptor Override enabled. Shut down now. The "
 			"EC will auto-boot the system and set the override.\n"
@@ -127,17 +129,22 @@ send_ec_cmd(uint8_t cmd)
 {
 	outb(0, EC_INDEX);
 	outb(cmd, EC_DATA);
-	wait_ec();
+	if (wait_ec() == -1)
+		errx(EXIT_FAILURE, "Timeout while waiting for EC!");
 }
 
-void
+int
 wait_ec(void)
 {
 	uint8_t busy;
+	int timeout = 1000;
 	do {
 		outb(0, EC_INDEX);
 		busy = inb(EC_DATA);
-	} while (busy); 
+		timeout--;
+		usleep(1000);
+	} while (busy && timeout > 0);
+	return timeout > 0 ? 0 : -1;
 }
 
 int
