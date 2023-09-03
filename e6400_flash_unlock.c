@@ -38,6 +38,7 @@ EC_FDO_CMD {
 	UNSET_OVERRIDE = 3
 };
 
+uint32_t pci_read_32(uint32_t dev, uint8_t reg);
 int get_fdo_status(void);
 uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
@@ -49,17 +50,21 @@ int set_gbl_smi_en(int enable);
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
-#define PMBASE 0x1000
-#define SMI_EN_REG (PMBASE + 0x30)
 
-/* Assume this is the same on all vendor BIOS versions */
-#define RCBA 0xfed18000
+#define PCI_CFG_ADDR 0xcf8
+#define PCI_CFG_DATA 0xcfc
+#define PCI_DEV(bus, dev, func) (1u << 31 | bus << 16 | dev << 11 | func << 8)
+#define LPC_DEV PCI_DEV(0, 0x1f, 0)
 
 #define RCBA_MMIO_LEN 0x4000
+
+/* Register offsets */
 #define SPIBAR 0x3800
 #define HSFS_REG  0x04
+#define SMI_EN_REG 0x30
 
 volatile uint8_t *rcba_mmio;
+uint16_t pmbase;
 
 int
 main(int argc, char *argv[])
@@ -68,14 +73,22 @@ main(int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
-	if ((ioperm(EC_INDEX, 2, 1) == -1) || (ioperm(SMI_EN_REG, 4, 1) == -1))
-		err(errno, "Could not access IO ports");
+	if (ioperm(EC_INDEX, 2, 1) == -1)
+		err(errno, "Could not access EC IO ports");
 	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
 		err(errno, "/dev/mem");
+	if (ioperm(PCI_CFG_ADDR, 8, 1) == -1)
+		err(errno, "Could not access PCI config IO ports");
+
+	/* Read RCBA and PMBASE from the LPC config registers */
+	long int rcba = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
+	pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
+	if (ioperm(pmbase + SMI_EN_REG, 4, 1) == -1)
+		err(errno, "Could not access SMI_EN register IO ports");
 
 	/* FDO pin-strap status bit is in RCBA mmio space */
 	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
-			RCBA);
+			rcba);
 	if (rcba_mmio == MAP_FAILED)
 		err(errno, "Could not map RCBA");
 
@@ -97,6 +110,12 @@ main(int argc, char *argv[])
 	return errno;
 }
 
+uint32_t
+pci_read_32(uint32_t dev, uint8_t reg)
+{
+	outl(dev | reg, PCI_CFG_ADDR);
+	return inl(PCI_CFG_DATA);
+}
 int
 get_fdo_status(void)
 {
@@ -150,19 +169,19 @@ wait_ec(void)
 int
 get_gbl_smi_en(void)
 {
-	return inl(SMI_EN_REG) & 1;
+	return inl(pmbase + SMI_EN_REG) & 1;
 }
 
 int
 set_gbl_smi_en(int enable)
 {
-	uint32_t smi_en = inl(SMI_EN_REG);	
+	uint32_t smi_en = inl(pmbase + SMI_EN_REG);
 	if (enable) {
 		smi_en |= 1;
 	} else {
 		smi_en &= ~1;
 	}
-	outl(smi_en, SMI_EN_REG);
+	outl(smi_en, pmbase + SMI_EN_REG);
 	return (get_gbl_smi_en() == enable);
 }
 
