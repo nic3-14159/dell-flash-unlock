@@ -39,6 +39,8 @@ EC_FDO_CMD {
 };
 
 uint32_t pci_read_32(uint32_t dev, uint8_t reg);
+void pci_write_32(uint32_t dev, uint8_t reg, uint32_t value);
+int check_lpc_decode(void);
 int get_fdo_status(void);
 uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
@@ -93,6 +95,9 @@ main(int argc, char *argv[])
 		err(errno, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) {
+		if (check_lpc_decode() == -1)
+			errx(-1, "Couldn't access EC I/O ports over LPC");
+
 		printf("Sending FDO override command to EC:\n");
 		ec_fdo_command(SET_OVERRIDE);
 		printf("Flash Descriptor Override enabled. Shut down now. The "
@@ -116,6 +121,49 @@ pci_read_32(uint32_t dev, uint8_t reg)
 	outl(dev | reg, PCI_CFG_ADDR);
 	return inl(PCI_CFG_DATA);
 }
+
+void
+pci_write_32(uint32_t dev, uint8_t reg, uint32_t value)
+{
+	outl(dev | reg, PCI_CFG_ADDR);
+	outl(value, PCI_CFG_DATA);
+}
+
+int
+check_lpc_decode(void)
+{
+	/* Check that at a Generic Decode Range Register is set up to
+	 * forward I/O ports 0x910 and 0x911 over LPC for the EC */
+	int i = 0;
+	int gen_dec_free = -1;
+	for (; i < 4; i++) {
+		uint32_t reg_val = pci_read_32(LPC_DEV, 0x84 + 4*i);
+		uint16_t base_addr = reg_val & 0xfffc;
+		uint16_t mask = ((reg_val >> 16) & 0xfffc) | 0x3;
+
+		/* Bit 0 is the enable for each decode range. If disabled, note
+		 * this register as available to add our own range decode */
+		if ((reg_val & 1) == 0)
+			gen_dec_free = i;
+
+		/* Check if the current range register matches port 0x910.
+		 * 0x911 doesn't need to be checked as the LPC bridge only
+		 * decodes at the dword level, and thus a check is redundant */
+		if ((0x910 & ~mask) == base_addr) {
+			return 0;
+		}
+	}
+
+	/* No matching range found, try setting a range in a free register */
+	if (gen_dec_free != -1) {
+		/* Set up an I/O decode range from 0x910-0x913 */
+		pci_write_32(LPC_DEV, 0x84 + 4 * gen_dec_free, 0x911);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
 int
 get_fdo_status(void)
 {
