@@ -21,7 +21,7 @@
 CC=cc
 CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
 
-all: e6400_flash_unlock.c
+all: e6400_flash_unlock.c accessors.h
 	$(CC) $(CFLAGS) e6400_flash_unlock.c -o e6400_flash_unlock
 
 clean:

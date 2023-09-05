@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "accessors.h"
+
 enum
 EC_FDO_CMD {
 	QUERY = 0,
@@ -38,8 +40,6 @@ EC_FDO_CMD {
 	UNSET_OVERRIDE = 3
 };
 
-uint32_t pci_read_32(uint32_t dev, uint8_t reg);
-void pci_write_32(uint32_t dev, uint8_t reg, uint32_t value);
 int check_lpc_decode(void);
 int check_bios_write_en(void);
 int get_fdo_status(void);
@@ -54,9 +54,6 @@ int set_gbl_smi_en(int enable);
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
 
-#define PCI_CFG_ADDR 0xcf8
-#define PCI_CFG_DATA 0xcfc
-#define PCI_DEV(bus, dev, func) (1u << 31 | bus << 16 | dev << 11 | func << 8)
 #define LPC_DEV PCI_DEV(0, 0x1f, 0)
 
 #define RCBA_MMIO_LEN 0x4000
@@ -131,20 +128,6 @@ main(int argc, char *argv[])
 		}
 	}
 	return errno;
-}
-
-uint32_t
-pci_read_32(uint32_t dev, uint8_t reg)
-{
-	outl(dev | reg, PCI_CFG_ADDR);
-	return inl(PCI_CFG_DATA);
-}
-
-void
-pci_write_32(uint32_t dev, uint8_t reg, uint32_t value)
-{
-	outl(dev | reg, PCI_CFG_ADDR);
-	outl(value, PCI_CFG_DATA);
 }
 
 int
