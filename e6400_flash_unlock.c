@@ -40,15 +40,15 @@ EC_FDO_CMD {
 	UNSET_OVERRIDE = 3
 };
 
-int check_lpc_decode(void);
-int check_bios_write_en(void);
 int get_fdo_status(void);
+int check_lpc_decode(void);
 uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
 int wait_ec(void);
-int get_gbl_smi_en(void);
+int check_bios_write_en(void);
 int set_gbl_smi_en(int enable);
+int get_gbl_smi_en(void);
 /* uint8_t read_ec_reg(uint8_t index); */
 
 #define EC_INDEX 0x910
@@ -131,6 +131,12 @@ main(int argc, char *argv[])
 }
 
 int
+get_fdo_status(void)
+{
+	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
+}
+
+int
 check_lpc_decode(void)
 {
 	/* Check that at a Generic Decode Range Register is set up to
@@ -163,28 +169,6 @@ check_lpc_decode(void)
 	} else {
 		return -1;
 	}
-}
-
-int
-check_bios_write_en(void)
-{
-	uint8_t bios_cntl = pci_read_32(LPC_DEV, 0xdc) & 0xff;
-	/* Bit 5 = SMM BIOS Write Protect Disable (SMM_BWP)
-	 * Bit 1 = BIOS Lock Enable (BLE)
-	 * If both are 0, then there's no write protection */
-	if ((bios_cntl & 0x22) == 0)
-		return 1;
-
-	/* SMM protection is enabled, but try enabling writes
-	 * anyway in case the vendor SMM code doesn't reset it */
-	pci_write_32(LPC_DEV, 0xdc, bios_cntl | 0x1);
-	return pci_read_32(LPC_DEV, 0xdc) & 0x1;
-}
-
-int
-get_fdo_status(void)
-{
-	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
 }
 
 /*
@@ -232,9 +216,19 @@ wait_ec(void)
 }
 
 int
-get_gbl_smi_en(void)
+check_bios_write_en(void)
 {
-	return inl(pmbase + SMI_EN_REG) & 1;
+	uint8_t bios_cntl = pci_read_32(LPC_DEV, 0xdc) & 0xff;
+	/* Bit 5 = SMM BIOS Write Protect Disable (SMM_BWP)
+	 * Bit 1 = BIOS Lock Enable (BLE)
+	 * If both are 0, then there's no write protection */
+	if ((bios_cntl & 0x22) == 0)
+		return 1;
+
+	/* SMM protection is enabled, but try enabling writes
+	 * anyway in case the vendor SMM code doesn't reset it */
+	pci_write_32(LPC_DEV, 0xdc, bios_cntl | 0x1);
+	return pci_read_32(LPC_DEV, 0xdc) & 0x1;
 }
 
 int
@@ -249,6 +243,13 @@ set_gbl_smi_en(int enable)
 	outl(smi_en, pmbase + SMI_EN_REG);
 	return (get_gbl_smi_en() == enable);
 }
+
+int
+get_gbl_smi_en(void)
+{
+	return inl(pmbase + SMI_EN_REG) & 1;
+}
+
 
 /*
 uint8_t
