@@ -41,6 +41,7 @@ EC_FDO_CMD {
 uint32_t pci_read_32(uint32_t dev, uint8_t reg);
 void pci_write_32(uint32_t dev, uint8_t reg, uint32_t value);
 int check_lpc_decode(void);
+int check_bios_write_en(void);
 int get_fdo_status(void);
 uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
 void write_ec_reg(uint8_t index, uint8_t data);
@@ -94,23 +95,40 @@ main(int argc, char *argv[])
 	if (rcba_mmio == MAP_FAILED)
 		err(errno, "Could not map RCBA");
 
-	if (get_fdo_status() == 1) {
+	if (get_fdo_status() == 1) { /* Descriptor not overridden */
 		if (check_lpc_decode() == -1)
-			errx(-1, "Couldn't access EC I/O ports over LPC");
+			err(ECANCELED, "Can't access EC I/O ports over LPC");
 
 		printf("Sending FDO override command to EC:\n");
 		ec_fdo_command(SET_OVERRIDE);
-		printf("Flash Descriptor Override enabled. Shut down now. The "
-			"EC will auto-boot the system and set the override.\n"
-			"Upon boot, re-run this utility to unlock flash.\n");
-	} else if (get_gbl_smi_en()){
-		set_gbl_smi_en(0);
-		printf("SMIs disabled. Internal flashing should work now.\n"
-			"After flashing, re-run this utility to enable SMIs.\n"
-			"(shutdown is buggy when SMIs are disabled)\n");
-	} else {
-		set_gbl_smi_en(1);
-		printf("SMIs enabled, you can now shutdown the system.\n");
+		printf("Flash Descriptor Override enabled.\n"
+			"Shut down (don't reboot) now.\n\n"
+			"The EC may auto-boot on some systems; if not then "
+			"manually power on.\n When the system boots rerun "
+			"this utility to finish unlocking.\n");
+	} else if (check_bios_write_en() == 0) {
+		/* SMI locks in place, try disabling SMIs to bypass them */
+		if (set_gbl_smi_en(0)) {
+			printf("SMIs disabled. Internal flashing should work "
+				"now.\n After flashing, re-run this utility "
+				"to enable SMIs.\n (shutdown is buggy when "
+				"SMIs are disabled)\n");
+		} else {
+			err(errno = ECANCELED, "Could not disable SMIs!");
+		}
+	} else { /* SMI locks not in place or bypassed */
+		if (get_gbl_smi_en()) {
+			/* SMIs are still enabled, assume this is an Exx10
+			 * or newer which don't need the SMM bypass */
+			printf("Flash is unlocked.\n"
+				"Internal flashing should work.\n");
+		} else {
+			/* SMIs disabled, assume this is an Exx00 after
+			 * unlocking and flashing */
+			set_gbl_smi_en(1);
+			printf("SMIs enabled.\n"
+				"You can now shutdown the system.\n");
+		}
 	}
 	return errno;
 }
@@ -162,6 +180,22 @@ check_lpc_decode(void)
 	} else {
 		return -1;
 	}
+}
+
+int
+check_bios_write_en(void)
+{
+	uint8_t bios_cntl = pci_read_32(LPC_DEV, 0xdc) & 0xff;
+	/* Bit 5 = SMM BIOS Write Protect Disable (SMM_BWP)
+	 * Bit 1 = BIOS Lock Enable (BLE)
+	 * If both are 0, then there's no write protection */
+	if ((bios_cntl & 0x22) == 0)
+		return 1;
+
+	/* SMM protection is enabled, but try enabling writes
+	 * anyway in case the vendor SMM code doesn't reset it */
+	pci_write_32(LPC_DEV, 0xdc, bios_cntl | 0x1);
+	return pci_read_32(LPC_DEV, 0xdc) & 0x1;
 }
 
 int
