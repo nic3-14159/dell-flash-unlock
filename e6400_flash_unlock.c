@@ -188,15 +188,15 @@ ec_fdo_command(enum EC_FDO_CMD arg)
 void
 write_ec_reg(uint8_t index, uint8_t data)
 {
-	outb(index, EC_INDEX);
-	outb(data, EC_DATA);
+	sys_outb(EC_INDEX, index);
+	sys_outb(EC_DATA, data);
 }
 
 void
 send_ec_cmd(uint8_t cmd)
 {
-	outb(0, EC_INDEX);
-	outb(cmd, EC_DATA);
+	sys_outb(EC_INDEX, 0);
+	sys_outb(EC_DATA, cmd);
 	if (wait_ec() == -1)
 		errx(EXIT_FAILURE, "Timeout while waiting for EC!");
 }
@@ -207,8 +207,8 @@ wait_ec(void)
 	uint8_t busy;
 	int timeout = 1000;
 	do {
-		outb(0, EC_INDEX);
-		busy = inb(EC_DATA);
+		sys_outb(EC_INDEX, 0);
+		busy = sys_inb(EC_DATA);
 		timeout--;
 		usleep(1000);
 	} while (busy && timeout > 0);
@@ -234,20 +234,20 @@ check_bios_write_en(void)
 int
 set_gbl_smi_en(int enable)
 {
-	uint32_t smi_en = inl(pmbase + SMI_EN_REG);
+	uint32_t smi_en = sys_inl(pmbase + SMI_EN_REG);
 	if (enable) {
 		smi_en |= 1;
 	} else {
 		smi_en &= ~1;
 	}
-	outl(smi_en, pmbase + SMI_EN_REG);
+	sys_outl(pmbase + SMI_EN_REG, smi_en);
 	return (get_gbl_smi_en() == enable);
 }
 
 int
 get_gbl_smi_en(void)
 {
-	return inl(pmbase + SMI_EN_REG) & 1;
+	return sys_inl(pmbase + SMI_EN_REG) & 1;
 }
 
 

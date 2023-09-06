@@ -20,9 +20,10 @@
 
 CC=cc
 CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
+SRCS=e6400_flash_unlock.c accessors.c
 
-all: e6400_flash_unlock.c accessors.h
-	$(CC) $(CFLAGS) e6400_flash_unlock.c -o e6400_flash_unlock
+all: $(SRCS) accessors.h
+	$(CC) $(CFLAGS) $(SRCS) -o e6400_flash_unlock
 
 clean:
 	rm -f e6400_flash_unlock
