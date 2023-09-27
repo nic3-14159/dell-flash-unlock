@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <stdint.h>
 
 #define PCI_CFG_ADDR 0xcf8
 #define PCI_CFG_DATA 0xcfc
@@ -27,6 +28,7 @@
 uint32_t pci_read_32(uint32_t dev, uint8_t reg);
 void pci_write_32(uint32_t dev, uint8_t reg, uint32_t value);
 
+int sys_iopl(int level);
 void sys_outb(unsigned int port, uint8_t data);
 void sys_outl(unsigned int port, uint32_t data);
 uint8_t sys_inb(unsigned int port);

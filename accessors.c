@@ -25,6 +25,7 @@
 #endif
 
 #if defined(__OpenBSD__)
+#include <machine/sysarch.h>
 #include <sys/types.h>
 #if defined(__amd64__)
 #include <amd64/pio.h>
@@ -32,6 +33,8 @@
 #include <i386/pio.h>
 #endif /* __i386__ */
 #endif /* __OpenBSD__ */
+
+#include <errno.h>
 
 #include "accessors.h"
 
@@ -87,4 +90,21 @@ sys_inl(unsigned int port)
 	return inl(port);
 	#endif
 	return 0;
+}
+
+int
+sys_iopl(int level)
+{
+#if defined(__linux__)
+	return iopl(level);
+#endif
+#if defined(__OpenBSD__)
+#if defined(__i386__)
+	return i386_iopl(level);
+#elif defined(__amd64__)
+	return amd64_iopl(level);
+#endif /* __amd64__ */
+#endif /* __OpenBSD__ */
+	errno = ENOSYS;
+	return -1;
 }

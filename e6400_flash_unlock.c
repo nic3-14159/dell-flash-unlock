@@ -20,7 +20,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <sys/io.h>
 #include <sys/mman.h>
 
 #include <err.h>
@@ -73,18 +72,14 @@ main(int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
-	if (ioperm(EC_INDEX, 2, 1) == -1)
-		err(errno, "Could not access EC IO ports");
+	if (sys_iopl(3) == -1)
+		err(errno, "Could not access IO ports");
 	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
 		err(errno, "/dev/mem");
-	if (ioperm(PCI_CFG_ADDR, 8, 1) == -1)
-		err(errno, "Could not access PCI config IO ports");
 
 	/* Read RCBA and PMBASE from the LPC config registers */
 	long int rcba = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
 	pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
-	if (ioperm(pmbase + SMI_EN_REG, 4, 1) == -1)
-		err(errno, "Could not access SMI_EN register IO ports");
 
 	/* FDO pin-strap status bit is in RCBA mmio space */
 	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
