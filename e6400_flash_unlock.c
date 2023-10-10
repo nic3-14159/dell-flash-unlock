@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
 	if (get_fdo_status() == 1) { /* Descriptor not overridden */
 		if (check_lpc_decode() == -1)
-			err(ECANCELED, "Can't access EC I/O ports over LPC");
+			err(errno = ECANCELED, "Can't forward I/O to LPC");
 
 		printf("Sending FDO override command to EC:\n");
 		ec_fdo_command(SET_OVERRIDE);
@@ -173,7 +173,7 @@ send_ec_cmd(uint8_t cmd)
 	sys_outb(EC_INDEX, 0);
 	sys_outb(EC_DATA, cmd);
 	if (wait_ec() == -1)
-		errx(EXIT_FAILURE, "Timeout while waiting for EC!");
+		err(errno = ECANCELED, "Timeout while waiting for EC!");
 }
 
 int
