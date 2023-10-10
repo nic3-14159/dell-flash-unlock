@@ -1,12 +1,43 @@
-# Dell Latitude E6400 Internal Flashing
+# Dell Laptop Internal Flashing
 
 This utility allows you to use flashrom's internal programmer to program the
 entire BIOS flash chip from software while still running the original Dell
-BIOS, which normally restricts software writes to the flash chip.
+BIOS, which normally restricts software writes to the flash chip. It seems like
+this works on any Dell laptop that has an EC similar to the SMSC MEC5035 on the
+E6400, which mainly seem to be the Latitude and Precision lines starting from
+around 2008 (E6400 era).
 
 ## TL;DR
 Run `make` to compile the utility, and then run `sudo ./e6400_flash_unlock` and
 follow the directions it outputs.
+
+## Confirmed supported devices
+- Latitude E6400
+- Latitude E6410
+- Latitude E4310
+- Latitude E6430
+- Precision M6800
+
+It is likely that any other Latitude/Precision laptops from the same era as
+devices specifically mentioned in the above list will work as Dell seems to use
+the same ECs in one generation.
+
+## Detailed device specific behavior
+- On GM45 era laptops, the expected behavior is that you will run the utility
+  for the first time, which will tell the EC to set the descriptor override on
+  the next boot. Then you will need to shut down the system, after which the
+  system will automatically boot up. You should then re-run the utility to
+  disable SMM, after which you can run flashrom. Finally, you should run the
+  utility a third time to reenable SMM so that shutdown works properly
+  afterwards.
+- On 1st Generation Intel Core systems such as the E6410 and newer, run the
+  utility and shutdown in the same way as the E6400. However, it seems like the
+  EC no longer automatically boots the system. In this case you should manually
+  power it on. It also seems that the firmware does not set the BIOS Lock bit
+  when the descriptor override is set, making the 2nd run after the reboot
+  technically unnecessary. There is no harm in rerunning it though, as the
+  utility can detect when the flash is unlocked and perform the correct steps
+  as necessary.
 
 ## How it works
 There are several ways the firmware can protect itself from being overwritten.
