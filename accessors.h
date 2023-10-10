@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+/* SPDX-FileCopyrightText: 2023 Nicholas Chin */
 
 #include <stdint.h>
 
