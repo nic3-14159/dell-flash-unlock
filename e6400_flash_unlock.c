@@ -13,26 +13,19 @@
 
 #include "accessors.h"
 
-enum
-EC_FDO_CMD {
-	QUERY = 0,
-	SET_OVERRIDE = 2,
-	UNSET_OVERRIDE = 3
-};
-
 int get_fdo_status(void);
 int check_lpc_decode(void);
-uint8_t ec_fdo_command(enum EC_FDO_CMD arg);
+void ec_set_fdo();
 void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
 int wait_ec(void);
 int check_bios_write_en(void);
 int set_gbl_smi_en(int enable);
 int get_gbl_smi_en(void);
-/* uint8_t read_ec_reg(uint8_t index); */
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
+#define EC_ENABLE_FDO 2
 
 #define LPC_DEV PCI_DEV(0, 0x1f, 0)
 
@@ -73,7 +66,7 @@ main(int argc, char *argv[])
 			err(errno = ECANCELED, "Can't forward I/O to LPC");
 
 		printf("Sending FDO override command to EC:\n");
-		ec_fdo_command(SET_OVERRIDE);
+		ec_set_fdo();
 		printf("Flash Descriptor Override enabled.\n"
 			"Shut down (don't reboot) now.\n\n"
 			"The EC may auto-boot on some systems; if not then "
@@ -147,18 +140,15 @@ check_lpc_decode(void)
 	}
 }
 
-/*
- * arg:
- * 0 = Query EC FDO status - TODO
- * 2 = Enable FDO for next boot
- * 3 = Disable FDO for next boot - TODO
- */
-uint8_t
-ec_fdo_command(enum EC_FDO_CMD arg)
+void
+ec_set_fdo()
 {
-	write_ec_reg(0x12, arg);
+	/* EC FDO command arguments for reference:
+	 * 0 = Query EC FDO status
+	 * 2 = Enable FDO for next boot
+	 * 3 = Disable FDO for next boot */
+	write_ec_reg(0x12, EC_ENABLE_FDO);
 	send_ec_cmd(0xb8);
-	return 1;
 }
 
 void
@@ -225,13 +215,3 @@ get_gbl_smi_en(void)
 {
 	return sys_inl(pmbase + SMI_EN_REG) & 1;
 }
-
-
-/*
-uint8_t
-read_ec_reg(uint8_t index)
-{
-	outb(index, EC_INDEX);
-	return inb(EC_DATA);
-}
-*/
