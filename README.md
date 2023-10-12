@@ -8,7 +8,7 @@ E6400, which mainly seem to be the Latitude and Precision lines starting from
 around 2008 (E6400 era).
 
 ## TL;DR
-Run `make` to compile the utility, and then run `sudo ./e6400_flash_unlock` and
+Run `make` to compile the utility, and then run `sudo ./dell_flash_unlock` and
 follow the directions it outputs.
 
 ## Confirmed supported devices
