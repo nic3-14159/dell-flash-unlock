@@ -100,3 +100,7 @@ There are other possible protection mechanisms that the firmware can utilize,
 such as Protected Range Register settings, which apply access permissions to
 address ranges of the flash, similar to the IFD. However, the E6400 vendor
 firmware does not utilize these, so they will not be discussed.
+
+## References
+- Open Security Training: Advanced x86: BIOS and SMM Internals - SMI Suppression
+  - https://opensecuritytraining.info/IntroBIOS_files/Day1_XX_Advanced%20x86%20-%20BIOS%20and%20SMM%20Internals%20-%20SMI%20Suppression.pdf
