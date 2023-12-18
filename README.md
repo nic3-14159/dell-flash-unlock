@@ -8,6 +8,8 @@ E6400, which mainly seem to be the Latitude and Precision lines starting from
 around 2008 (E6400 era).
 
 ## TL;DR
+On Linux, ensure you are booting with the `iomem=relaxed` kernel parameter.
+On OpenBSD, ensure you are booting with securelevel set to -1.
 Run `make` to compile the utility, and then run `sudo ./dell_flash_unlock` and
 follow the directions it outputs.
 
