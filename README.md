@@ -14,10 +14,10 @@ Run `make` to compile the utility, and then run `sudo ./dell_flash_unlock` and
 follow the directions it outputs.
 
 ## Confirmed supported devices
-- Latitude E6400
-- Latitude E6410
-- Latitude E4310
-- Latitude E6430
+- Latitude E6400, E6500
+- Latitude E6410, E4310
+- Latitude E6420
+- Latitude E6430, E6530
 - Precision M6800
 
 It is likely that any other Latitude/Precision laptops from the same era as
