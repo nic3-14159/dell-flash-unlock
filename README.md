@@ -24,6 +24,15 @@ It is likely that any other Latitude/Precision laptops from the same era as
 devices specifically mentioned in the above list will work as Dell seems to use
 the same ECs in one generation.
 
+## Tested
+These systems have been tested, but were reported as not working with
+dell-flash-unlock. This could be due to user error, a bug in this utility, or
+the feature not being implemented in Dell's firmware. If you have such a system,
+please test the utility and report whether or not it actually works for you.
+
+- Latitude E6220
+- Latitude E6330
+
 ## Detailed device specific behavior
 - On GM45 era laptops, the expected behavior is that you will run the utility
   for the first time, which will tell the EC to set the descriptor override on
