@@ -8,10 +8,26 @@ E6400, which mainly seem to be the Latitude and Precision lines starting from
 around 2008 (E6400 era).
 
 ## TL;DR
-On Linux, ensure you are booting with the `iomem=relaxed` kernel parameter.
-On OpenBSD, ensure you are booting with securelevel set to -1.
-Run `make` to compile the utility, and then run `sudo ./dell_flash_unlock` and
-follow the directions it outputs.
+
+### Linux specific
+- On Linux, ensure you are booting with the `iomem=relaxed` kernel parameter.
+- If you get a "Function not implemented" error, ensure that your kernel has
+  "CONFIG_X86_IOPL_IOPERM" set to "y". Here are several common locations for
+  the config and how to check them:
+  - `zcat /proc/config.gz | grep IOPL`
+  - `grep IOPL /boot/config`
+  - `grep IOPL /boot/config-$(uname -r)`
+  If it says it is not set, then you will need to install or compile a kernel
+  with that option set.
+
+### OpenBSD
+- On OpenBSD, ensure you are booting with securelevel set to -1.
+
+### General
+Make sure an AC adapter is plugged into your system
+
+Run `make` to compile the utility, and then run `./dell_flash_unlock` with
+root/superuser permissions and follow the directions it outputs.
 
 ## Confirmed supported devices
 - Latitude E6400, E6500
