@@ -34,6 +34,7 @@ root/superuser permissions and follow the directions it outputs.
 - Latitude E6410, E4310
 - Latitude E6420, E6520
 - Latitude E6430, E6530, E5530
+- Latitude E7240
 - Precision M6800, M5800
 
 It is likely that any other Latitude/Precision laptops from the same era as
