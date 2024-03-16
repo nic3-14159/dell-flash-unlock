@@ -6,6 +6,9 @@ CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
 ifeq ($(shell uname), OpenBSD)
 	CFLAGS += -l$(shell uname -p)
 endif
+ifeq ($(shell uname), NetBSD)
+	CFLAGS += -l$(shell uname -p)
+endif
 SRCS=dell_flash_unlock.c accessors.c
 
 all: $(SRCS) accessors.h

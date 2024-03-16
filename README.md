@@ -20,8 +20,8 @@ around 2008 (E6400 era).
   If it says it is not set, then you will need to install or compile a kernel
   with that option set.
 
-### OpenBSD
-- On OpenBSD, ensure you are booting with securelevel set to -1.
+### OpenBSD/NetBSD
+- On OpenBSD/NetBSD, ensure you are booting with securelevel set to -1.
 
 ### General
 Make sure an AC adapter is plugged into your system
