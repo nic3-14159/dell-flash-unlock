@@ -8,12 +8,15 @@
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <sys/types.h>
 #include <machine/sysarch.h>
+#endif /* __OpenBSD__ || __NetBSD__ */
+
+#if defined(__OpenBSD__)
 #if defined(__amd64__)
 #include <amd64/pio.h>
 #elif defined(__i386__)
 #include <i386/pio.h>
 #endif /* __i386__ */
-#endif /* __OpenBSD__ || __NetBSD__ */
+#endif /* __OpenBSD__ */
 
 #include <errno.h>
 
