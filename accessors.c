@@ -43,7 +43,7 @@ sys_outb(unsigned int port, uint8_t data)
 	outb(port, data);
 	#endif
 	#if defined(__NetBSD__)
-	__asm__ volatile ( "outb %b0, %w1" : : "a"(data), "d"(port) : "memory");
+	__asm__ volatile ("outb %b0, %w1" : : "a"(data), "d"(port));
 	#endif
 }
 
@@ -57,7 +57,7 @@ sys_outl(unsigned int port, uint32_t data)
 	outl(port, data);
 	#endif
 	#if defined(__NetBSD__)
-	__asm__ volatile ( "outl %0, %w1" : : "a"(data), "d"(port) : "memory");
+	__asm__ volatile ("outl %0, %w1" : : "a"(data), "d"(port));
 	#endif
 }
 
@@ -70,7 +70,7 @@ sys_inb(unsigned int port)
 
 	#if defined(__NetBSD__)
 	uint8_t retval;
-	__asm__ volatile("inb %w1, %b0" : "=a" (retval) : "d" (port) : "memory");
+	__asm__ volatile ("inb %w1, %b0" : "=a" (retval) : "d" (port));
 	return retval;
 	#endif
 	return 0;
@@ -84,7 +84,7 @@ sys_inl(unsigned int port)
 	#endif
 	#if defined(__NetBSD__)
 	int retval;
-	__asm__ volatile("inl %w1, %0" : "=a" (retval) : "d" (port) : "memory");
+	__asm__ volatile ("inl %w1, %0" : "=a" (retval) : "d" (port));
 	return retval;
 	#endif
 	return 0;
