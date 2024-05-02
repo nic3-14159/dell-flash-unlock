@@ -96,6 +96,7 @@ main(int argc, char *argv[])
 				"You can now shutdown the system.\n");
 		}
 	}
+	sys_iopl(0);
 	return errno;
 }
 
