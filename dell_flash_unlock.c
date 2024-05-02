@@ -15,7 +15,7 @@
 
 int get_fdo_status(void);
 int check_lpc_decode(void);
-void ec_set_fdo();
+void ec_set_fdo(void);
 void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
 int wait_ec(void);
@@ -141,7 +141,7 @@ check_lpc_decode(void)
 }
 
 void
-ec_set_fdo()
+ec_set_fdo(void)
 {
 	/* EC FDO command arguments for reference:
 	 * 0 = Query EC FDO status
