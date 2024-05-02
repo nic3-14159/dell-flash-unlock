@@ -20,14 +20,17 @@ around 2008 (E6400 era).
   If it says it is not set, then you will need to install or compile a kernel
   with that option set.
 
-### OpenBSD/NetBSD
-- On OpenBSD/NetBSD, ensure you are booting with securelevel set to -1.
+### OpenBSD/NetBSD/FreeBSD
+- The makefile is not currently compatible with POSIX make; install and use GNU
+  Make (gmake) to build dell-flash-unlock instead of make
+- On OpenBSD/NetBSD/FreeBSD, ensure you are booting with securelevel set to -1.
 
 ### General
 Make sure an AC adapter is plugged into your system
 
-Run `make` to compile the utility, and then run `./dell_flash_unlock` with
-root/superuser permissions and follow the directions it outputs.
+Run `make` (or `gmake` on BSD) to compile the utility, and then run
+`./dell_flash_unlock` with root/superuser permissions and follow the directions
+it outputs.
 
 ## Confirmed supported devices
 - Latitude E6400, E6500
