@@ -18,6 +18,13 @@
 #endif /* __i386__ */
 #endif /* __OpenBSD__ */
 
+#if defined(__FreeBSD__)
+#include <fcntl.h>
+#include <sys/types.h>
+#include <machine/cpufunc.h>
+#include <unistd.h>
+#endif /* __FreeBSD__ */
+
 #include <errno.h>
 
 #include "accessors.h"
@@ -42,7 +49,7 @@ sys_outb(unsigned int port, uint8_t data)
 	#if defined(__linux__)
 	outb(data, port);
 	#endif
-	#if defined(__OpenBSD__)
+	#if defined(__OpenBSD__) || defined(__FreeBSD__)
 	outb(port, data);
 	#endif
 	#if defined(__NetBSD__)
@@ -56,7 +63,7 @@ sys_outl(unsigned int port, uint32_t data)
 	#if defined(__linux__)
 	outl(data, port);
 	#endif
-	#if defined(__OpenBSD__)
+	#if defined(__OpenBSD__) || defined(__FreeBSD__)
 	outl(port, data);
 	#endif
 	#if defined(__NetBSD__)
@@ -67,7 +74,8 @@ sys_outl(unsigned int port, uint32_t data)
 uint8_t
 sys_inb(unsigned int port)
 {
-	#if defined(__linux__) || defined (__OpenBSD__)
+	#if defined(__linux__) || defined (__OpenBSD__) \
+		|| defined(__FreeBSD__)
 	return inb(port);
 	#endif
 
@@ -82,7 +90,8 @@ sys_inb(unsigned int port)
 uint32_t
 sys_inl(unsigned int port)
 {
-	#if defined(__linux__) || defined (__OpenBSD__)
+	#if defined(__linux__) || defined (__OpenBSD__) \
+		|| defined(__FreeBSD__)
 	return inl(port);
 	#endif
 	#if defined(__NetBSD__)
@@ -114,6 +123,28 @@ sys_iopl(int level)
 	return x86_64_iopl(level);
 #endif /* __amd64__ */
 #endif /* __NetBSD__ */
+
+#if defined(__FreeBSD__)
+	/* Refer to io(4) manual page. This assumes the legacy behavior
+	 * where opening /dev/io raises the IOPL of the process */
+	static int io_fd = -1;
+
+	/* Requesting privileged access */
+	if (level > 0) {
+		if (io_fd == -1) {
+			io_fd = open("/dev/io", O_RDONLY);
+			return (io_fd == -1) ? -1 : 0;
+		}
+	/* Lowering access to lowest level */
+	} else if (level == 0 && io_fd != -1) {
+		if (close(io_fd) == -1) {
+			return -1;
+		} else {
+			io_fd = -1;
+		}
+	}
+	return 0;
+#endif /* __FreeBSD__ */
 
 	errno = ENOSYS;
 	return -1;
