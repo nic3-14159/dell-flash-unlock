@@ -32,10 +32,10 @@ root/superuser permissions and follow the directions it outputs.
 ## Confirmed supported devices
 - Latitude E6400, E6500
 - Latitude E6410, E4310
-- Latitude E6420, E6520
-- Latitude E6430, E6530, E5530
+- Latitude E5420, E5520, E6420, E6520
+- Latitude E5530, E6430, E6530
 - Latitude E7240
-- Precision M6800, M5800
+- Precision M4800, M6800
 
 It is likely that any other Latitude/Precision laptops from the same era as
 devices specifically mentioned in the above list will work as Dell seems to use
