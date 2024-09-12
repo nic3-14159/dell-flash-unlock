@@ -46,16 +46,21 @@ main(int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
+	printf("iopl\n");
 	if (sys_iopl(3) == -1)
 		err(errno, "Could not access IO ports");
+	printf("Accessing /dev/mem\n");
 	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
 		err(errno, "/dev/mem");
 
 	/* Read RCBA and PMBASE from the LPC config registers */
+	printf("Read RCBA\n");
 	long int rcba = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
+	printf("Read PMBASE\n");
 	pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
 
 	/* FDO pin-strap status bit is in RCBA mmio space */
+	printf("mmaping RCBA\n");
 	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
 			rcba);
 	if (rcba_mmio == MAP_FAILED)
@@ -103,12 +108,14 @@ main(int argc, char *argv[])
 int
 get_fdo_status(void)
 {
+	printf("Checking FDO status\n");
 	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
 }
 
 int
 check_lpc_decode(void)
 {
+	printf("Checking lpc decode\n");
 	/* Check that at a Generic Decode Range Register is set up to
 	 * forward I/O ports 0x910 and 0x911 over LPC for the EC */
 	int i = 0;
@@ -127,12 +134,14 @@ check_lpc_decode(void)
 		 * 0x911 doesn't need to be checked as the LPC bridge only
 		 * decodes at the dword level, and thus a check is redundant */
 		if ((0x910 & ~mask) == base_addr) {
+			printf("Found matching LPC decode range\n");
 			return 0;
 		}
 	}
 
 	/* No matching range found, try setting a range in a free register */
 	if (gen_dec_free != -1) {
+		printf("Setting up I/O decode range\n");
 		/* Set up an I/O decode range from 0x910-0x913 */
 		pci_write_32(LPC_DEV, 0x84 + 4 * gen_dec_free, 0x911);
 		return 0;
@@ -185,6 +194,7 @@ wait_ec(void)
 int
 check_bios_write_en(void)
 {
+	printf("Checking BIOS write enable bit\n");
 	uint8_t bios_cntl = pci_read_32(LPC_DEV, 0xdc) & 0xff;
 	/* Bit 5 = SMM BIOS Write Protect Disable (SMM_BWP)
 	 * Bit 1 = BIOS Lock Enable (BLE)
@@ -201,6 +211,7 @@ check_bios_write_en(void)
 int
 set_gbl_smi_en(int enable)
 {
+	printf("Changing Global SMI enable bit\n");
 	uint32_t smi_en = sys_inl(pmbase + SMI_EN_REG);
 	if (enable) {
 		smi_en |= 1;
@@ -214,5 +225,6 @@ set_gbl_smi_en(int enable)
 int
 get_gbl_smi_en(void)
 {
+	printf("Reading Global SMI enable bit\n");
 	return sys_inl(pmbase + SMI_EN_REG) & 1;
 }
