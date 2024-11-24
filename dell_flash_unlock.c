@@ -12,8 +12,10 @@
 #include <unistd.h>
 
 #include "accessors.h"
+#include "chipset_ids.h"
 
-int get_fdo_status(void);
+enum Platform get_platform(uint16_t pci_device_id);
+int get_fdo_status(uintptr_t spibar);
 int check_lpc_decode(void);
 void ec_set_fdo(void);
 void write_ec_reg(uint8_t index, uint8_t data);
@@ -29,14 +31,18 @@ int get_gbl_smi_en(uint16_t pmbase);
 
 #define LPC_DEV PCI_DEV(0, 0x1f, 0)
 
+/* Skylake and newer */
+#define PMC_DEV PCI_DEV(0, 0x1f, 2)
+#define SPI_DEV PCI_DEV(0, 0x1f, 5)
+
 #define RCBA_MMIO_LEN 0x4000
+#define SPI_MEMBAR_LEN 4096
 
 /* Register offsets */
 #define SPIBAR 0x3800
 #define HSFS_REG  0x04
 #define SMI_EN_REG 0x30
 
-volatile uint8_t *rcba_mmio;
 
 int
 main(int argc, char *argv[])
@@ -44,6 +50,10 @@ main(int argc, char *argv[])
 	int devmemfd;
 	(void)argc;
 	(void)argv;
+	void *mmio;
+	uint32_t base_addr;
+	uintptr_t spi_mmio_base = 0;
+	enum Platform platform;
 	uint16_t pmbase = 0;
 
 	if (sys_iopl(3) == -1)
@@ -51,17 +61,40 @@ main(int argc, char *argv[])
 	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
 		err(errno, "/dev/mem");
 
-	/* Read RCBA and PMBASE from the LPC config registers */
-	long int rcba = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
-	pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
+	uint16_t lpc_device_id = (uint16_t)((pci_read_32(LPC_DEV, 0x0) >> 16) & 0xffff);
+	platform = get_platform(lpc_device_id);
 
-	/* FDO pin-strap status bit is in RCBA mmio space */
-	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
-			rcba);
-	if (rcba_mmio == MAP_FAILED)
-		err(errno, "Could not map RCBA");
+	switch (platform) {
+	/* Assume unknown is an older chipset for now */
+	case UNKNOWN:
+	case GM45:
+	case SANDYBRIDGE:
+	case IVYBRIDGE:
+	case HASWELL:
+		/* SPIBAR in RCBA space */
+		base_addr = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
+		mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
+			base_addr);
+		if (mmio == MAP_FAILED)
+			err(errno, "Could not map RCBA");
 
-	if (get_fdo_status() == 1) { /* Descriptor not overridden */
+		spi_mmio_base = ((uintptr_t)mmio) + SPIBAR;
+		pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
+		break;
+	case SKYLAKE:
+		/* SPIBAR in dedicated MMIO BAR space of SPI PCI Device */
+		base_addr = pci_read_32(SPI_DEV, 0x10) & 0xfffff000;
+		mmio = mmap(0, SPI_MEMBAR_LEN, PROT_READ, MAP_SHARED, devmemfd,
+				base_addr);
+		if (mmio == MAP_FAILED)
+			err(errno, "Could not map SPI MEMBAR");
+
+		spi_mmio_base = (uintptr_t)mmio;
+		pmbase = pci_read_32(PMC_DEV, 0x40) & 0xff00;
+		break;
+	}
+
+	if (get_fdo_status(spi_mmio_base) == 1) { /* Descriptor not overridden */
 		if (check_lpc_decode() == -1)
 			err(errno = ECANCELED, "Can't forward I/O to LPC");
 
@@ -100,10 +133,30 @@ main(int argc, char *argv[])
 	return errno;
 }
 
+/* TODO: Add other chipsets */
+enum Platform get_platform(uint16_t pci_device_id) {
+	switch (pci_device_id) {
+		case PCI_DID_INTEL_QM170:
+		case PCI_DID_INTEL_HM170:
+		case PCI_DID_INTEL_CM236:
+		case PCI_DID_INTEL_HM175:
+		case PCI_DID_INTEL_QM175:
+		case PCI_DID_INTEL_CM238:
+		case PCI_DID_INTEL_SPT_PCH_U_BASE:
+		case PCI_DID_INTEL_SPT_PCH_Y_PREMIUM:
+		case PCI_DID_INTEL_SPT_PCH_U_PREMIUM:
+			 return SKYLAKE;
+			 break;
+		default:
+			 return UNKNOWN;
+	}
+
+}
+
 int
-get_fdo_status(void)
+get_fdo_status(uintptr_t spibar)
 {
-	return (*(uint16_t*)(rcba_mmio + SPIBAR + HSFS_REG) >> 13) & 1;
+	return (*(uint16_t*)(spibar + HSFS_REG) >> 13) & 1;
 }
 
 int

@@ -1,0 +1,22 @@
+/* SPDX-License-Identifier: MIT */
+/* SPDX-FileCopyrightText: 2024 Nicholas Chin */
+
+/* Mobile Skylake chipsets (Sunrise Point) */
+#define PCI_DID_INTEL_QM170 0xa14d
+#define PCI_DID_INTEL_HM170 0xa14e
+#define PCI_DID_INTEL_CM236 0xa150
+#define PCI_DID_INTEL_HM175 0xa152
+#define PCI_DID_INTEL_QM175 0xa153
+#define PCI_DID_INTEL_CM238 0xa154
+#define PCI_DID_INTEL_SPT_PCH_U_BASE 0x9d43
+#define PCI_DID_INTEL_SPT_PCH_Y_PREMIUM 0x9d46
+#define PCI_DID_INTEL_SPT_PCH_U_PREMIUM 0x9d48
+
+enum Platform {
+	UNKNOWN,
+	GM45,
+	SANDYBRIDGE,
+	IVYBRIDGE,
+	HASWELL,
+	SKYLAKE,
+};
