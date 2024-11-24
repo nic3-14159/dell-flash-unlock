@@ -20,8 +20,8 @@ void write_ec_reg(uint8_t index, uint8_t data);
 void send_ec_cmd(uint8_t cmd);
 int wait_ec(void);
 int check_bios_write_en(void);
-int set_gbl_smi_en(int enable);
-int get_gbl_smi_en(void);
+int set_gbl_smi_en(uint16_t pmbase, int enable);
+int get_gbl_smi_en(uint16_t pmbase);
 
 #define EC_INDEX 0x910
 #define EC_DATA 0x911
@@ -37,7 +37,6 @@ int get_gbl_smi_en(void);
 #define SMI_EN_REG 0x30
 
 volatile uint8_t *rcba_mmio;
-uint16_t pmbase;
 
 int
 main(int argc, char *argv[])
@@ -45,6 +44,7 @@ main(int argc, char *argv[])
 	int devmemfd;
 	(void)argc;
 	(void)argv;
+	uint16_t pmbase = 0;
 
 	if (sys_iopl(3) == -1)
 		err(errno, "Could not access IO ports");
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 			"this utility to finish unlocking.\n");
 	} else if (check_bios_write_en() == 0) {
 		/* SMI locks in place, try disabling SMIs to bypass them */
-		if (set_gbl_smi_en(0)) {
+		if (set_gbl_smi_en(pmbase, 0)) {
 			printf("SMIs disabled. Internal flashing should work "
 				"now.\n After flashing, re-run this utility "
 				"to enable SMIs.\n (shutdown is buggy when "
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 			err(errno = ECANCELED, "Could not disable SMIs!");
 		}
 	} else { /* SMI locks not in place or bypassed */
-		if (get_gbl_smi_en()) {
+		if (get_gbl_smi_en(pmbase)) {
 			/* SMIs are still enabled, assume this is an Exx10
 			 * or newer which don't need the SMM bypass */
 			printf("Flash is unlocked.\n"
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 		} else {
 			/* SMIs disabled, assume this is an Exx00 after
 			 * unlocking and flashing */
-			set_gbl_smi_en(1);
+			set_gbl_smi_en(pmbase, 1);
 			printf("SMIs enabled.\n"
 				"You can now shutdown the system.\n");
 		}
@@ -199,7 +199,7 @@ check_bios_write_en(void)
 }
 
 int
-set_gbl_smi_en(int enable)
+set_gbl_smi_en(uint16_t pmbase, int enable)
 {
 	uint32_t smi_en = sys_inl(pmbase + SMI_EN_REG);
 	if (enable) {
@@ -208,11 +208,11 @@ set_gbl_smi_en(int enable)
 		smi_en &= ~1;
 	}
 	sys_outl(pmbase + SMI_EN_REG, smi_en);
-	return (get_gbl_smi_en() == enable);
+	return (get_gbl_smi_en(pmbase) == enable);
 }
 
 int
-get_gbl_smi_en(void)
+get_gbl_smi_en(uint16_t pmbase)
 {
 	return sys_inl(pmbase + SMI_EN_REG) & 1;
 }
