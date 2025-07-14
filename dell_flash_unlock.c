@@ -82,6 +82,7 @@ main(int argc, char *argv[])
 		pmbase = pci_read_32(LPC_DEV, 0x40) & 0xff80;
 		break;
 	case SKYLAKE:
+	case KABYLAKE:
 		/* SPIBAR in dedicated MMIO BAR space of SPI PCI Device */
 		base_addr = pci_read_32(SPI_DEV, 0x10) & 0xfffff000;
 		mmio = mmap(0, SPI_MEMBAR_LEN, PROT_READ, MAP_SHARED, devmemfd,
@@ -146,6 +147,14 @@ enum Platform get_platform(uint16_t pci_device_id) {
 		case PCI_DID_INTEL_SPT_PCH_Y_PREMIUM:
 		case PCI_DID_INTEL_SPT_PCH_U_PREMIUM:
 			 return SKYLAKE;
+			 break;
+		case PCI_DID_INTEL_KBL_PCH_Y_PREMIUM_HDCP:
+		case PCI_DID_INTEL_KBL_PCH_U_PREMIUM_HDCP:
+		case PCI_DID_INTEL_KBL_PCH_U_BASE_HDCP:
+		case PCI_DID_INTEL_KBL_PCH_U_BASE:
+		case PCI_DID_INTEL_KBL_PCH_Y_PREMIUM:
+		case PCI_DID_INTEL_KBL_PCH_U_PREMIUM:
+			 return KABYLAKE;
 			 break;
 		default:
 			 return UNKNOWN;
